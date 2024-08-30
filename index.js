@@ -1,81 +1,90 @@
 const http = require('http');
 const express = require('express')
 
-let notes = [
-    {
-      id: "1",
-      content: "HTML is easy beya",
-      important: true
-    },
-    {
-      id: "2",
-      content: "Browser can execute only JavaScript",
-      important: false
-    },
-    {
-      id: "3",
-      content: "GET and POST are the most important methods of HTTP protocol",
-      important: true
-    }
-  ]
+let phonebook = [
+  { 
+    "id": "1",
+    "name": "Arto Hellas", 
+    "number": "040-123456"
+  },
+  { 
+    "id": "2",
+    "name": "Ada Lovelace", 
+    "number": "39-44-5323523"
+  },
+  { 
+    "id": "3",
+    "name": "Dan Abramov", 
+    "number": "12-43-234345"
+  },
+  { 
+    "id": "4",
+    "name": "Mary Poppendieck", 
+    "number": "39-23-6423122"
+  }
+]
 
 // const app = http.createServer((request, response) => {
 //     response.writeHead(200, {'Content-type': 'application/json'})
-//     response.end(JSON.stringify(notes))
+//     response.end(JSON.stringify(phonebook))
 // })
 const app = express();
 app.use(express.json())
 
-app.get('/',(request,response) => {
-  response.send('Hello World')
+//Info page
+app.get('/info', (req, res) => {
+  const currentDate = new Date().toString();
+  res.send(`<p>Phonebook has info ${phonebook.length} people</p></br><p>${currentDate}</p>`)
+}
+)
+
+//GET ALL
+app.get('/api/persons',(request,response) => {
+  response.json(phonebook)
 })
 
-app.get('/api/notes',(request,response) => {
-  response.json(notes)
-})
-
-app.get('/api/notes/:id', (request, response) => {
-    const id = request.params.id;
-    const note = notes.find(item => item.id === id)
-    if(note){
-        response.json(note)
-    }else{
-        response.status(404).end()
-    }
-})
-
-app.delete('/api/notes/:id', (req,res) => {
+//GET PERSON
+app.get('/api/persons/:id', (req,res) => {
   const id = req.params.id;
-  const note = notes.find(note => note.id !== id )
-  res.status(204).end()
+  const person = phonebook.find(person => person.id === id)
+  if(person){
+    res.json(person)
+  } else{
+    res.status(404).json({error: "Check your request id. Looks like something missing"})
+  }
 }
 )
 
-const generateNewID = () => {
-    const maxID = notes.length > 0 ? Math.max(...notes.map(note => Number(note.id))) : 0
-    return String(maxID +1); 
-}
-
-
-app.post('/api/notes', (req,res) => {
-    const noteData = req.body;
-    if(!noteData.content){
-        return res.status(400).json({error: "data missing"})
-    }
-
-    const note = {
-        content: noteData.content,
-        important: noteData.important || false,
-        id: generateNewID()
-    }
-
-    notes.concat(note)
-    console.log(note)
-    res.json(note)
+//DELETE PERSON
+app.delete('/api/persons/:id', (req,res) => {
+  const id = req.params.id;
+  const deletePhone = phonebook.find(person => person.id === id)
+  if(deletePhone){
+    res.status(204).end()
+  } else {
+    res.status(404).end('The Person Alredy Deleted.')
+  }
+  
 }
 )
 
-const PORT = 3001;
+const generateID = () => {
+  maxID = phonebook.length > 0 ? Math.max(...phonebook.map(person => Number(person.id))) : 0
+  return String(maxID + 1)
+}
+
+
+//ADD NEW PERSON
+app.post('/api/persons', (req,res) => {
+  const person = req.body;
+  if(!person.name || !person.number) return res.status(404).json({erros: "Missing content."})
+    phonebook.concat({name: person.name ,number:person.number, id:generateID()})
+  res.json(person)
+}
+)
+
+
+const PORT = 3002;
 app.listen(PORT,() => {
     console.log('Server running on port ')
 });

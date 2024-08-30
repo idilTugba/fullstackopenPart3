@@ -1,7 +1,7 @@
-POST http://localhost:3001/api/notes
+POST http://localhost:3002/api/persons
 content-type:application/json
 
 {
-    "content": "DELETE and PATCH are the most important methods of HTTP protocol",
-    "important": true
+    "name": "ME ME ME",
+    "number": "1313 143134123"
 }
