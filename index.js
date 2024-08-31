@@ -71,14 +71,18 @@ app.delete('/api/persons/:id', (req,res) => {
 const generateID = () => {
   maxID = phonebook.length > 0 ? Math.max(...phonebook.map(person => Number(person.id))) : 0
   return String(maxID + 1)
+  const id = Math.floor(Math.random()*10)
 }
 
 
 //ADD NEW PERSON
 app.post('/api/persons', (req,res) => {
-  const person = req.body;
-  if(!person.name || !person.number) return res.status(404).json({erros: "Missing content."})
-    phonebook.concat({name: person.name ,number:person.number, id:generateID()})
+  const data = req.body;
+  if(!data.number) return res.status(404).json({erros: "Phonenumber is missing."})
+  if(!data.name ) return res.status(404).json({erros: `Name is missing.`})
+  if(phonebook.find(person => person.name === data.name) ) return res.status(404).json({erros: `Name is already exist.`})
+    const person = {name: data.name ,number:data.number, id:Math.floor(Math.random()*1000)}
+    phonebook.concat(person)
   res.json(person)
 }
 )
