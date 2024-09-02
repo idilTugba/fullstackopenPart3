@@ -1,5 +1,7 @@
 const http = require('http');
 const express = require('express')
+const morgan = require('morgan')
+const morganBody = require('morgan-body')
 
 let phonebook = [
   { 
@@ -30,6 +32,8 @@ let phonebook = [
 // })
 const app = express();
 app.use(express.json())
+app.use(morgan('combined'));
+morganBody(app);
 
 //Info page
 app.get('/info', (req, res) => {
