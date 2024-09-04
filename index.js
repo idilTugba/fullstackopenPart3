@@ -1,6 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
-const cors = require('cros');
+const cors = require('cors');
 const morganBody = require('morgan-body')
 
 let phonebook = [
