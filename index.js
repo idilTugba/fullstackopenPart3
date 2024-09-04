@@ -1,6 +1,6 @@
-const http = require('http');
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cros');
 const morganBody = require('morgan-body')
 
 let phonebook = [
@@ -32,6 +32,7 @@ let phonebook = [
 // })
 const app = express();
 app.use(express.json())
+app.use(cors())
 // app.use(morgan('combined'));
 // morganBody(app);
 app.use(morgan((tokens, req, res) => {
