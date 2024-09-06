@@ -30,6 +30,11 @@ let phonebook = [
 //     response.writeHead(200, {'Content-type': 'application/json'})
 //     response.end(JSON.stringify(phonebook))
 // })
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
 const app = express();
 app.use(express.json())
 app.use(express.static('dist'))
@@ -104,6 +109,7 @@ app.post('/api/persons', (req,res) => {
 }
 )
 
+app.use(unknownEndpoint)
 
 const PORT = 3002 || process.env.PORT;
 app.listen(PORT,() => {
