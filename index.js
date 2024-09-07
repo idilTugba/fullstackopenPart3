@@ -12,10 +12,6 @@ let phonebook = []
 //     response.end(JSON.stringify(phonebook))
 // })
 
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: 'unknown endpoint' })
-}
-
 const app = express();
 app.use(express.json())
 app.use(express.static('dist'))
@@ -38,39 +34,47 @@ app.use(morgan((tokens, req, res) => {
 app.get('/info', (req, res) => {
   const currentDate = new Date().toString();
   res.send(`<p>Phonebook has info ${phonebook.length} people</p></br><p>${currentDate}</p>`)
-}
-)
+})
 
 //GET ALL
 app.get('/api/persons',(request,response) => {
   // response.json(phonebook)
   Phonebook.find({}).then(persons => {
-    phonebook.push(persons)
-    response.json(persons)
+    if(persons){
+      phonebook.push(persons)
+      response.json(persons)
+    } else {
+      response.status(404).end()
+    }
+  }).catch(error => {
+    response.status(500).end()
   })
 })
 
 //GET PERSON
-app.get('/api/persons/:id', (req,res) => {
+app.get('/api/persons/:id', (req, res, next) => {
   const id = req.params.id;
   Phonebook.findById(id).then(result => {
-    res.json(result)
-  })
+    if(result){
+      res.json(result)
+    } else{
+      res.status(404).json({error: "Check your request id. Looks like something missing"})
+    }
+  }).catch(error => next(error))
   
-    // res.status(404).json({error: "Check your request id. Looks like something missing"})
-}
-)
+})
 
 //DELETE PERSON
-app.delete('/api/persons/:id', (req,res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
   const id = req.params.id;
   Phonebook.findByIdAndDelete(id).then(item => {
-    res.json(item)
-  })
-  // res.status(404).end('The Person Alredy Deleted.')
-  
-}
-)
+    if(item){
+      res.status(204).end()
+    } else {
+      res.status(404).json({error:'The Person Alredy Deleted.'})
+    }
+  }).catch(error => next(error))
+})
 
 const generateID = () => {
   maxID = phonebook.length > 0 ? Math.max(...phonebook.map(person => Number(person.id))) : 0
@@ -92,10 +96,41 @@ app.post('/api/persons', (req,res) => {
     person.save().then(item => {
       res.json(item)
     })
-}
-)
+})
 
+app.put('/api/persons/:id', (req, res, next) => {
+  const id = req.params.id;
+  const data = req.body;
+  if(!data.name) return res.status(404).json({error:"Name not exist"})
+  if(!data.number) return res.status(404).json({error:"Number not exist"})
+  const person = {
+    name : data.name,
+    number: data.number
+  }
+
+  Phonebook.findByIdAndUpdate(id, person, {new: true}).then(updateNow => {
+    if(updateNow){
+      res.json(updateNow)
+    }else {
+      res.status(404).json({error:'The Person already updated!'})
+    }
+  }).catch(error => next(error))
+})
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
 app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.log(error)
+  if (error.name === "CastError"){
+    res.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+app.use(errorHandler)
 
 const PORT = process.env.PORT;
 app.listen(PORT,() => {
