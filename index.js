@@ -5,28 +5,7 @@ const cors = require('cors');
 const morganBody = require('morgan-body')
 const Phonebook = require('./models/phonebook')
 
-let phonebook = [
-  { 
-    "id": "1",
-    "name": "Arto Hellas", 
-    "number": "040-123456"
-  },
-  { 
-    "id": "2",
-    "name": "Ada Lovelace", 
-    "number": "39-44-5323523"
-  },
-  { 
-    "id": "3",
-    "name": "Dan Abramov", 
-    "number": "12-43-234345"
-  },
-  { 
-    "id": "4",
-    "name": "Mary Poppendieck", 
-    "number": "39-23-6423122"
-  }
-]
+let phonebook = []
 
 // const app = http.createServer((request, response) => {
 //     response.writeHead(200, {'Content-type': 'application/json'})
@@ -65,32 +44,30 @@ app.get('/info', (req, res) => {
 //GET ALL
 app.get('/api/persons',(request,response) => {
   // response.json(phonebook)
-  Phonebook.find({}).then(notes => {
-    response.json(notes)
+  Phonebook.find({}).then(persons => {
+    phonebook.push(persons)
+    response.json(persons)
   })
 })
 
 //GET PERSON
 app.get('/api/persons/:id', (req,res) => {
   const id = req.params.id;
-  const person = phonebook.find(person => person.id === id)
-  if(person){
-    res.json(person)
-  } else{
-    res.status(404).json({error: "Check your request id. Looks like something missing"})
-  }
+  Phonebook.findById(id).then(result => {
+    res.json(result)
+  })
+  
+    // res.status(404).json({error: "Check your request id. Looks like something missing"})
 }
 )
 
 //DELETE PERSON
 app.delete('/api/persons/:id', (req,res) => {
   const id = req.params.id;
-  const deletePhone = phonebook.find(person => person.id === id)
-  if(deletePhone){
-    res.status(204).end()
-  } else {
-    res.status(404).end('The Person Alredy Deleted.')
-  }
+  Phonebook.findByIdAndDelete(id).then(item => {
+    res.json(item)
+  })
+  // res.status(404).end('The Person Alredy Deleted.')
   
 }
 )
@@ -108,9 +85,13 @@ app.post('/api/persons', (req,res) => {
   if(!data.number) return res.status(404).json({erros: "Phonenumber is missing."})
   if(!data.name ) return res.status(404).json({erros: `Name is missing.`})
   if(phonebook.find(person => person.name === data.name) ) return res.status(404).json({erros: `Name is already exist.`})
-    const person = {name: data.name ,number:data.number, id:Math.floor(Math.random()*1000)}
-    phonebook.concat(person)
-  res.json(person)
+    const person = new Phonebook({
+      name: data.name ,
+      number:data.number
+    })
+    person.save().then(item => {
+      res.json(item)
+    })
 }
 )
 
