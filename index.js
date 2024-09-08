@@ -84,31 +84,31 @@ const generateID = () => {
 
 
 //ADD NEW PERSON
-app.post('/api/persons', (req,res) => {
+app.post('/api/persons', (req, res, next) => {
   const data = req.body;
-  if(!data.number) return res.status(404).json({erros: "Phonenumber is missing."})
-  if(!data.name ) return res.status(404).json({erros: `Name is missing.`})
-  if(phonebook.find(person => person.name === data.name) ) return res.status(404).json({erros: `Name is already exist.`})
+  if(!data.number) return res.status(400).json({error: "Phonenumber is missing."})
+  if(!data.name ) return res.status(400).json({error: `Name is missing.`})
+  if(phonebook.find(person => person.name === data.name) ) return res.status(404).json({error: `Name is already exist.`})
     const person = new Phonebook({
       name: data.name ,
       number:data.number
     })
     person.save().then(item => {
       res.json(item)
-    })
+    }).catch(error => next(error))
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
   const id = req.params.id;
   const data = req.body;
-  if(!data.name) return res.status(404).json({error:"Name not exist"})
-  if(!data.number) return res.status(404).json({error:"Number not exist"})
+  if(!data.name) return res.status(400).json({error:"Name not exist"})
+  if(!data.number) return res.status(400).json({error:"Number not exist"})
   const person = {
     name : data.name,
     number: data.number
   }
 
-  Phonebook.findByIdAndUpdate(id, person, {new: true}).then(updateNow => {
+  Phonebook.findByIdAndUpdate(id, person, {new: true, runValidators: true, context: 'query' }).then(updateNow => {
     if(updateNow){
       res.json(updateNow)
     }else {
@@ -125,7 +125,9 @@ app.use(unknownEndpoint)
 const errorHandler = (error, request, response, next) => {
   console.log(error)
   if (error.name === "CastError"){
-    res.status(400).send({ error: 'malformatted id' })
+    response.status(400).send({ error: 'malformatted id' })
+  } else if(error.name === "ValidationError") {
+    response.status(400).send({error: error.message})
   }
 
   next(error)
